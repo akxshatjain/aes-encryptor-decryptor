@@ -850,7 +850,20 @@ function applyModalPaste(autoProcess = false) {
 // ==========================================================
 
 
+
 async function pasteFromClipboard() {
+    if (!navigator.clipboard ||
+        typeof navigator.clipboard.readText !== "function") {
+
+        showToast(
+            "Clipboard access is unavailable. Long-press the input field and select Paste.",
+            "error"
+        );
+
+        payloadInput.focus();
+        return;
+    }
+
     try {
         const clipboardText = await navigator.clipboard.readText();
 
@@ -859,30 +872,20 @@ async function pasteFromClipboard() {
             return;
         }
 
-        // Directly paste into the main input.
+        // Paste directly into the main input field.
         payloadInput.value = clipboardText.trim();
 
-        updateInputStats();
-
+        // Update character count and input detection.
         payloadInput.dispatchEvent(
             new Event("input", { bubbles: true })
         );
 
         payloadInput.focus();
 
-        showToast("Pasted successfully!", "success");
+        showToast("Pasted from clipboard successfully.", "success");
 
     } catch (error) {
-        console.error("Clipboard error:", error);
-
-        showToast(
-            "Clipboard access denied. Please allow clipboard permission.",
-            "error"
-        );
-
-        payloadInput.focus();
-    }
-}
+        console.warn("Clipboard access unavailable:", error);
 
         // Do not open the separate paste modal.
         showToast(
