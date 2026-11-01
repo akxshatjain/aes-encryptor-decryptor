@@ -849,34 +849,53 @@ function applyModalPaste(autoProcess = false) {
 // CLIPBOARD PASTE
 // ==========================================================
 
+
 async function pasteFromClipboard() {
-    if (navigator.clipboard &&
-        typeof navigator.clipboard.readText === "function") {
+    if (!navigator.clipboard ||
+        typeof navigator.clipboard.readText !== "function") {
 
-        try {
-            const text = await navigator.clipboard.readText();
+        showToast(
+            "Clipboard access is unavailable. Long-press the input field and select Paste.",
+            "error"
+        );
 
-            if (text && text.trim()) {
-                payloadInput.value = text.trim();
-
-                updateInputStats();
-
-                showToast("Pasted from clipboard.", "success");
-
-                payloadInput.focus();
-                return;
-            }
-
-            showToast("Clipboard is empty.", "error");
-            return;
-
-        } catch (error) {
-            console.warn("Clipboard access unavailable:", error);
-        }
+        payloadInput.focus();
+        return;
     }
 
-    openPasteModal();
+    try {
+        const clipboardText = await navigator.clipboard.readText();
+
+        if (!clipboardText || !clipboardText.trim()) {
+            showToast("Clipboard is empty.", "error");
+            return;
+        }
+
+        // Paste directly into the main input field.
+        payloadInput.value = clipboardText.trim();
+
+        // Update character count and input detection.
+        payloadInput.dispatchEvent(
+            new Event("input", { bubbles: true })
+        );
+
+        payloadInput.focus();
+
+        showToast("Pasted from clipboard successfully.", "success");
+
+    } catch (error) {
+        console.warn("Clipboard access unavailable:", error);
+
+        // Do not open the separate paste modal.
+        showToast(
+            "Clipboard permission denied. Long-press the input field and select Paste.",
+            "error"
+        );
+
+        payloadInput.focus();
+    }
 }
+
 
 // ==========================================================
 // THEME
