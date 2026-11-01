@@ -845,59 +845,38 @@ function applyModalPaste(autoProcess = false) {
     }
 }
 
-
-
-
 // ==========================================================
 // CLIPBOARD PASTE
 // ==========================================================
 
-
 async function pasteFromClipboard() {
-    if (!payloadInput) return;
+    if (navigator.clipboard &&
+        typeof navigator.clipboard.readText === "function") {
 
-    // Keep clipboard access directly inside the button click action.
-    try {
-        if (navigator.clipboard &&
-            typeof navigator.clipboard.readText === "function") {
+        try {
+            const text = await navigator.clipboard.readText();
 
-            const clipboardText = await navigator.clipboard.readText();
-
-            if (clipboardText && clipboardText.trim()) {
-                payloadInput.value = clipboardText.trim();
-
-                payloadInput.dispatchEvent(
-                    new Event("input", { bubbles: true })
-                );
+            if (text && text.trim()) {
+                payloadInput.value = text.trim();
 
                 updateInputStats();
-                payloadInput.focus();
 
-                showToast("Pasted successfully!", "success");
+                showToast("Pasted from clipboard.", "success");
+
+                payloadInput.focus();
                 return;
             }
 
-            showToast("Your clipboard is empty.", "error");
+            showToast("Clipboard is empty.", "error");
             return;
+
+        } catch (error) {
+            console.warn("Clipboard access unavailable:", error);
         }
-
-        throw new Error("Clipboard API unavailable");
-
-    } catch (error) {
-        console.warn("Mobile clipboard access:", error);
-
-        // Focus the actual input so the phone's native
-        // keyboard/context menu can provide the Paste action.
-        payloadInput.focus();
-
-        showToast(
-            "Tap and hold inside the input field and select Paste.",
-            "error"
-        );
     }
+
+    openPasteModal();
 }
-
-
 
 // ==========================================================
 // THEME
