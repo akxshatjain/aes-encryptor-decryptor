@@ -852,34 +852,51 @@ function applyModalPaste(autoProcess = false) {
 // CLIPBOARD PASTE
 // ==========================================================
 
+
 async function pasteFromClipboard() {
-    if (navigator.clipboard &&
-        typeof navigator.clipboard.readText === "function") {
+    if (!payloadInput) return;
 
-        try {
-            const text = await navigator.clipboard.readText();
+    // Keep clipboard access directly inside the button click action.
+    try {
+        if (navigator.clipboard &&
+            typeof navigator.clipboard.readText === "function") {
 
-            if (text && text.trim()) {
-                payloadInput.value = text.trim();
+            const clipboardText = await navigator.clipboard.readText();
+
+            if (clipboardText && clipboardText.trim()) {
+                payloadInput.value = clipboardText.trim();
+
+                payloadInput.dispatchEvent(
+                    new Event("input", { bubbles: true })
+                );
 
                 updateInputStats();
-
-                showToast("Pasted from clipboard.", "success");
-
                 payloadInput.focus();
+
+                showToast("Pasted successfully!", "success");
                 return;
             }
 
-            showToast("Clipboard is empty.", "error");
+            showToast("Your clipboard is empty.", "error");
             return;
-
-        } catch (error) {
-            console.warn("Clipboard access unavailable:", error);
         }
-    }
 
-    openPasteModal();
+        throw new Error("Clipboard API unavailable");
+
+    } catch (error) {
+        console.warn("Mobile clipboard access:", error);
+
+        // Focus the actual input so the phone's native
+        // keyboard/context menu can provide the Paste action.
+        payloadInput.focus();
+
+        showToast(
+            "Tap and hold inside the input field and select Paste.",
+            "error"
+        );
+    }
 }
+
 
 
 // ==========================================================
